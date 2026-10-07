@@ -141,7 +141,7 @@
 async function fetchData() {
     try {
         // Ganti URL di bawah ini dengan Web App URL dari Google Apps Script Anda
-        const response = await fetch('https://dashboard-valins.vercel.app/');
+        const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQEOqBAL3pcd0KbcD399uSJqhBuJ7tUibmIYeLnqsHjxi_XFdlqMlxeGlcGk6Dl33VtIsU9opPBPHMq/pub?gid=1047965615&single=true&output=csv');
         const result = await response.json();
         
         if (result.status === "success") {
