@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Validasi Core Idle - Southern Jakarta</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #1b5e20;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        table {
+            width: auto; /* Menggunakan lebar otomatis agar kolom menyesuaikan isi */
+            border-collapse: collapse;
+            font-size: 11px; /* Ukuran font diperkecil sedikit agar muat dan rapi */
+            white-space: nowrap;
+        }
+        th, td {
+            border: 1px solid #b0bec5;
+            padding: 4px 6px; /* Padding dikurangi drastis agar kolom menjadi lebih sempit/kecil */
+            text-align: center;
+        }
+        th {
+            background-color: #2e7d32;
+            color: white;
+            font-weight: bold;
+        }
+        .group-header {
+            background-color: #1b5e20;
+            color: white;
+            font-size: 12px;
+        }
+        .bg-green {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+        .bg-red {
+            background-color: #ffcdd2;
+            color: #b71c1c;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #a5d6a7;
+            font-weight: bold;
+            color: #000;
+        }
+        .loading {
+            text-align: center;
+            font-size: 16px;
+            padding: 30px;
+            color: #666;
+        }
+
+        /* Tata letak tabel tambahan di tengah bawah */
+        .bottom-section {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .sub-table {
+            border-collapse: collapse;
+            font-size: 11px;
+            background: #fff;
+        }
+        .sub-table th, .sub-table td {
+            border: 1px solid #b0bec5;
+            padding: 4px 8px;
+            text-align: center;
+        }
+        .sub-table th {
+            background-color: #2e7d32;
+            color: white;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Report Validasi Core Idle (Feeder & Distribusi) Southern Jakarta</h2>
+    <div id="loading" class="loading">Memuat data dari Google Sheets...</div>
+    <div style="overflow-x:auto;">
+        <table id="data-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th rowspan="2">NO</th>
+                    <th rowspan="2">STO</th>
+                    <th colspan="4" class="group-header">CORE FEEDER</th>
+                    <th colspan="4" class="group-header">CORE DISTRIBUSI</th>
+                    <th class="empty-spacer" style="background: transparent; border: none; width: 20px;"></th>
+                    <th colspan="2" class="group-header">FEEDER</th>
+                    <th colspan="2" class="group-header">DISTRIBUSI</th>
+                </tr>
+                <tr>
+                    <!-- Core Feeder -->
+                    <th>TGT OKTOBER</th>
+                    <th>VALID</th>
+                    <th>% VALID YTD (T= 77.78%)</th>
+                    <th>% VALID MTD (T= 100.00%)</th>
+                    <!-- Core Distribusi -->
+                    <th>TGT OKTOBER</th>
+                    <th>VALID</th>
+                    <th>% VALID YTD (T= 77.78%)</th>
+                    <th>% VALID MTD (T= 100.00%)</th>
+                    <!-- Pemisah -->
+                    <th style="background: transparent; border: none;"></th>
+                    <!-- Feeder -->
+                    <th>VALID H-1</th>
+                    <th>BERHASIL VALINS H-1</th>
+                    <!-- Distribusi -->
+                    <th>VALID H-1</th>
+                    <th>BERHASIL VALINS H-1</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+async function fetchData() {
+    try {
+        const response = await fetch('/api/data');
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            renderTable(result.data);
+        } else {
+            document.getElementById('loading').innerText = "Gagal memuat data: " + result.message;
+        }
+    } catch (error) {
+        document.getElementById('loading').innerText = "Terjadi kesalahan koneksi ke server.";
+        console.error(error);
+    }
+}
+
+function renderTable(rows) {
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = "";
+    
+    let started = false;
+    
+    rows.forEach(row => {
+        const col0 = String(row[0] || "").trim();
+        const col1 = String(row[1] || "").trim();
+        
+        if (col0 === "1" || started) {
+            started = true;
+            
+            const tr = document.createElement('tr');
+            const isTotal = col1.toUpperCase() === "TOTAL" || col0.toUpperCase() === "TOTAL";
+            
+            if (isTotal) {
+                tr.className = "total-row";
+            }
+
+            // Urutan indeks kolom data yang akan ditampilkan (menyisipkan sel kosong di tengah sebagai pemisah)
+            // 0-1: NO, STO
+            // 2-5: Core Feeder
+            // 6-9: Core Distribusi
+            // [Pemisah]: Kita buatkan kolom kosong
+            // 11-14: Feeder & Distribusi
+            const indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            
+            indices.forEach(colIdx => {
+                let td = document.createElement('td');
+                let val = row[colIdx] !== undefined ? row[colIdx] : "";
+                td.innerText = val;
+
+                // Pewarnaan kondisional persentase yang akurat sesuai target masing-masing kolom
+                if (!isTotal && val !== "") {
+                    let numVal = parseFloat(val.toString().replace('%', '').trim());
+                    if (!isNaN(numVal)) {
+                        // Untuk kolom % VALID YTD (indeks 4 dan 8), targetnya 77.78%
+                        if ((colIdx === 4 || colIdx === 8) && numVal >= 77.78) {
+                            td.className = "bg-green";
+                        } 
+                        // Untuk kolom % VALID MTD (indeks 5 dan 9), targetnya 100.00%
+                        else if ((colIdx === 5 || colIdx === 9) && numVal >= 100.00) {
+                            td.className = "bg-green";
+                        } 
+                        // Jika kurang dari target masing-masing, beri warna merah
+                        else if (colIdx === 4 || colIdx === 5 || colIdx === 8 || colIdx === 9) {
+                            td.className = "bg-red";
+                        }
+                    }
+                }
+                tr.appendChild(td);
+            });
+
+            // 1. Tambahkan 1 kolom pemisah kosong di tengah (antara Core Distribusi dan Feeder)
+            let emptyTd = document.createElement('td');
+            emptyTd.style.border = "none";
+            emptyTd.style.background = "transparent";
+            tr.appendChild(emptyTd);
+
+            // 2. Lanjutkan sisa kolom (Feeder & Distribusi) mulai dari indeks 11 sampai 14
+            for (let colIdx = 11; colIdx < row.length; colIdx++) {
+                let td = document.createElement('td');
+                let val = row[colIdx] !== undefined ? row[colIdx] : "";
+                td.innerText = val;
+                tr.appendChild(td);
+            }
+
+            tbody.appendChild(tr);
+
+            if (isTotal) {
+                started = false;
+            }
+        }
+    });
+    
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('data-table').style.display = 'table';
+}
+fetchData();
+setInterval(fetchData, 30000);
+</script>
+
+</body>
+</html>
