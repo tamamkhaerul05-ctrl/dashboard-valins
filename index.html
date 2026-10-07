@@ -140,11 +140,12 @@
 <script>
 async function fetchData() {
     try {
-        const response = await fetch('/api/data');
+        // Ganti URL di bawah ini dengan Web App URL dari Google Apps Script Anda
+        const response = await fetch('MASUKKAN_WEB_APP_URL_DISINIhttps://dashboard-valins.vercel.app/');
         const result = await response.json();
         
         if (result.status === "success") {
-            renderTable(result.data);
+            renderTables(result.data);
         } else {
             document.getElementById('loading').innerText = "Gagal memuat data: " + result.message;
         }
@@ -153,7 +154,6 @@ async function fetchData() {
         console.error(error);
     }
 }
-
 function renderTable(rows) {
     const tbody = document.getElementById('table-body');
     tbody.innerHTML = "";
